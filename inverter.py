@@ -168,9 +168,9 @@ if __name__ == "__main__":
     settings_exist_flag = settings_exist(RS232_settings_file_full_path)
     
     if settings_exist_flag:
-        write_rs232_settings(RS232_settings_file_full_path, RS232_settings)
-    else:
         read_rs232_settings(RS232_settings)
+    else:
+        write_rs232_settings(RS232_settings_file_full_path, RS232_settings)
 
     inverter = connect_inverter(settings=RS232_settings)
     inverter.reset_input_buffer()
