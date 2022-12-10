@@ -687,8 +687,82 @@ def INQ_total_pv_generated_energy(inverter):
     response = read_inverter_to_string(inverter)
     return response[1:]
 
+def INQ_pv_generated_energy_by_year(inverter, year="2022"):
+    command = "QEY" + year
+    command_bytes = command.encode("utf-8")
+    command_crc = crc16_xmodem(command_bytes)
+    command_bytes_array = bytearray(command_bytes)
+    command_bytes_array.append(command_crc >> 8)
+    command_bytes_array.append(command_crc & 255)
+    command_bytes_array.append(13)
+    write_inverter(inverter, command_bytes_array)
+    response = read_inverter_to_string(inverter)
+    return response[1:]
+
+def INQ_pv_generated_energy_by_year_and_month(inverter, year="2022", month="01"):
+    command = "QEM" + year + month
+    command_bytes = command.encode("utf-8")
+    command_crc = crc16_xmodem(command_bytes)
+    command_bytes_array = bytearray(command_bytes)
+    command_bytes_array.append(command_crc >> 8)
+    command_bytes_array.append(command_crc & 255)
+    command_bytes_array.append(13)
+    print(command_bytes_array)
+    write_inverter(inverter, command_bytes_array)
+    response = read_inverter_to_string(inverter)
+    return response[1:]
+
+def INQ_pv_generated_energy_by_year_month_and_day(inverter, year="2022", month="11", day="30"):
+    command = "QED" + year + month + day
+    command_bytes = command.encode("utf-8")
+    command_crc = crc16_xmodem(command_bytes)
+    command_bytes_array = bytearray(command_bytes)
+    command_bytes_array.append(command_crc >> 8)
+    command_bytes_array.append(command_crc & 255)
+    command_bytes_array.append(13)
+    print(command_bytes_array)
+    write_inverter(inverter, command_bytes_array)
+    response = read_inverter_to_string(inverter)
+    return response[1:]
+
 def INQ_total_output_load_energy(inverter):
     command = "QLT"
+    command_bytes = command.encode("utf-8")
+    command_crc = crc16_xmodem(command_bytes)
+    command_bytes_array = bytearray(command_bytes)
+    command_bytes_array.append(command_crc >> 8)
+    command_bytes_array.append(command_crc & 255)
+    command_bytes_array.append(13)
+    write_inverter(inverter, command_bytes_array)
+    response = read_inverter_to_string(inverter)
+    return response[1:]
+
+def INQ_output_load_energy_by_year(inverter, year="2022"):
+    command = "QLY" + year
+    command_bytes = command.encode("utf-8")
+    command_crc = crc16_xmodem(command_bytes)
+    command_bytes_array = bytearray(command_bytes)
+    command_bytes_array.append(command_crc >> 8)
+    command_bytes_array.append(command_crc & 255)
+    command_bytes_array.append(13)
+    write_inverter(inverter, command_bytes_array)
+    response = read_inverter_to_string(inverter)
+    return response[1:]
+
+def INQ_output_load_energy_by_year_and_month(inverter, year="2022", month="11"):
+    command = "QLM" + year + month
+    command_bytes = command.encode("utf-8")
+    command_crc = crc16_xmodem(command_bytes)
+    command_bytes_array = bytearray(command_bytes)
+    command_bytes_array.append(command_crc >> 8)
+    command_bytes_array.append(command_crc & 255)
+    command_bytes_array.append(13)
+    write_inverter(inverter, command_bytes_array)
+    response = read_inverter_to_string(inverter)
+    return response[1:]
+
+def INQ_output_load_energy_by_year_month_and_day(inverter, year="2022", month="12", day="05"):
+    command = "QLD" + year + month + day
     command_bytes = command.encode("utf-8")
     command_crc = crc16_xmodem(command_bytes)
     command_bytes_array = bytearray(command_bytes)
@@ -711,6 +785,42 @@ def INQ_bms_message(inverter):
     response = read_inverter_to_string(inverter)
     return response[1:]
 
+def SET_start_ate_test(inverter):
+    command = "ATE1"
+    command_bytes = command.encode("utf-8")
+    command_crc = crc16_xmodem(command_bytes)
+    command_bytes_array = bytearray(command_bytes)
+    command_bytes_array.append(command_crc >> 8)
+    command_bytes_array.append(command_crc & 255)
+    command_bytes_array.append(13)
+    write_inverter(inverter, command_bytes_array)
+    response = read_inverter_to_string(inverter)
+    if response[1:] == "ACK":
+        return 1
+    else:
+        if response[1:] == "NAK":
+            return 0
+        else:
+            return -1
+
+def SET_stop_ate_test(inverter):
+    command = "ATE0"
+    command_bytes = command.encode("utf-8")
+    command_crc = crc16_xmodem(command_bytes)
+    command_bytes_array = bytearray(command_bytes)
+    command_bytes_array.append(command_crc >> 8)
+    command_bytes_array.append(command_crc & 255)
+    command_bytes_array.append(13)
+    write_inverter(inverter, command_bytes_array)
+    response = read_inverter_to_string(inverter)
+    if response[1:] == "ACK":
+        return 1
+    else:
+        if response[1:] == "NAK":
+            return 0
+        else:
+            return -1
+
 def crc16_xmodem(data):
     crc16 = mkCrcFun(0x11021, rev=False, initCrc=0x0000, xorOut=0x0000)
     return crc16(data)
@@ -729,22 +839,8 @@ if __name__ == "__main__":
     inverter.reset_output_buffer()
     inverter.flush()
     
-    print(INQ_device_flag_status(inverter))
-    print(INQ_device_rating_information(inverter))
-    print(INQ_device_general_status_parameters(inverter))
-    print(INQ_device_mode(inverter))
-    print(INQ_device_warning_status(inverter)[30])
-    print(INQ_default_setting_value_information(inverter))
-    print(INQ_selectable_value_about_max_charging_current(inverter))
-    print(INQ_selectable_value_about_max_utility_charging_current(inverter))
-    print(INQ_time(inverter))
-    print(INQ_device_output_source_priority_time_order(inverter))
-    print(INQ_battery_equalization_status_parameters(inverter))
-    print(INQ_model_name(inverter))
-    print(INQ_general_model_name(inverter))
-    print(INQ_total_pv_generated_energy(inverter))
-    print(INQ_total_output_load_energy(inverter))
-    print(INQ_bms_message(inverter))
+    print("Connected to:", INQ_model_name(inverter))
+    #print(SET_start_ate_test(inverter))
     
     #while 1:
     #    print(INQ_device_protocol_id(inverter))
