@@ -867,22 +867,5 @@ def INV_read_inverter_name():
     return response
 
 if __name__ == "__main__":
-    inverter = connect_inverter(settings=init_inverter())
-    inverter.reset_input_buffer()
-    inverter.reset_output_buffer()
-    inverter.flush()
-    
-    print("Connected to:", INQ_model_name(inverter))
-    #print(SET_start_ate_test(inverter))
-    
-    #while 1:
-    #    print(INQ_device_protocol_id(inverter))
-    #    print(INQ_device_serial_nr(inverter))
-    #    print(INQ_long_device_serial_nr(inverter))
-    #    print(INQ_main_cpu_fw_version(inverter))
-    #    print(INQ_remote_panel_fw_version(inverter))
-    #    print(INQ_bluetooth_version(inverter))
-    #    print(INQ_device_rating_information(inverter))
-    #    time.sleep(3)
+    print("Connected to:", INV_read_inverter_name())
 
-    disconnect_inverter(inverter)
