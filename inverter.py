@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 
 from os.path import exists
 import pickle
@@ -9,30 +9,44 @@ import serial
 import json
 from crcmod import mkCrcFun
 
-RS232_settings_file_name = "settings.json"
-RS232_settings_file_path = ""
-RS232_settings_file_full_path = RS232_settings_file_path + RS232_settings_file_name
-RS232_settings = {"port": "/dev/ttyUSB0", "baudrate": 2400, "timeout": 5}
-
-def settings_exist(RS232_settings_file_full_path):
-    if exists(RS232_settings_file_full_path):
+def settings_exist(settingsFileName):
+    if exists(settingsFileName):
         return 1
     else:
-        return 0
+        if exists("../" + settingsFileName):
+            return 2
+        else:
+            return 0
 
-def write_rs232_settings(file=RS232_settings_file_full_path, settings=RS232_settings):
-    RS232_settings_json = json.dumps(RS232_settings)
-    RS232_settings_file = open(RS232_settings_file_full_path,"w")
-    RS232_settings_file.write(RS232_settings_json)
-    RS232_settings_file.close()
+def generate_settings_file(settingsFileName, folder_level, settings_content):
+    settings_json = json.dumps(settings_content)
+    if folder_level == 1:
+        settings_file = open(settingsFileName,"w")
+    else:
+        settings_file = open("../" + settingsFileName,"w")
+    settings_file.write(settings_json)
+    settings_file.close()
 
-def read_rs232_settings(file=RS232_settings_file_full_path):
-    RS232_settings_file = open(RS232_settings_file_full_path, "rb")
-    RS232_settings = json.load(RS232_settings_file)
-    RS232_settings_file.close()
-    return RS232_settings
+def read_settings_file(settingsFileName, folder_level):
+    if folder_level == 1:
+        settings_file = open(settingsFileName, "rb")
+    else:
+        settings_file = open("../" + settingsFileName, "rb")
+    settings_content = json.load(settings_file)
+    settings_file.close()
+    return settings_content
 
-def connect_inverter(settings=RS232_settings):
+def write_settings_file(settingsFileName, folder_level, settingsContent):
+    settings_json = json.dumps(settingsContent)
+    if folder_level == 1:
+        settings_file = open(settingsFileName,"w")
+    else:
+        settings_file = open("../" + settingsFileName,"w")
+    settings_file.write(settings_json)
+    settings_file.close()
+    return 0
+
+def connect_inverter(settings):
     ser = serial.Serial(port=settings["port"], baudrate=settings["baudrate"], timeout=settings["timeout"])
     return ser
 
@@ -825,16 +839,35 @@ def crc16_xmodem(data):
     crc16 = mkCrcFun(0x11021, rev=False, initCrc=0x0000, xorOut=0x0000)
     return crc16(data)
 
-if __name__ == "__main__":
+def init_inverter():
+    settingsFileName = "settings.ini"
+    RS232_settings = {"port": "/dev/ttyUSB0", "baudrate": 2400, "timeout": 5}
 
-    settings_exist_flag = settings_exist(RS232_settings_file_full_path)
+    settingsFileFolderLevel = settings_exist(settingsFileName)
+    if settingsFileFolderLevel == 0:
+        generate_settings_file(settingsFileName, 1, RS232_settings)
+        settingsFileFolderLevel = 1
     
-    if settings_exist_flag:
-        RS232_settings = read_rs232_settings(RS232_settings_file_full_path)
-    else:
-        write_rs232_settings(RS232_settings_file_full_path, RS232_settings)
+    readSettingsContent = read_settings_file(settingsFileName, settingsFileFolderLevel)
 
-    inverter = connect_inverter(settings=RS232_settings)
+    for x in RS232_settings:
+        if x not in readSettingsContent:
+            readSettingsContent[x] = RS232_settings[x]
+            write_settings_file(settingsFileName, settingsFileFolderLevel, readSettingsContent)
+    
+    return read_settings_file(settingsFileName, settingsFileFolderLevel)
+
+def INV_read_inverter_name():
+    inverter = connect_inverter(settings=init_inverter())
+    inverter.reset_input_buffer()
+    inverter.reset_output_buffer()
+    inverter.flush()
+    response = INQ_model_name(inverter)
+    disconnect_inverter(inverter)
+    return response
+
+if __name__ == "__main__":
+    inverter = connect_inverter(settings=init_inverter())
     inverter.reset_input_buffer()
     inverter.reset_output_buffer()
     inverter.flush()
